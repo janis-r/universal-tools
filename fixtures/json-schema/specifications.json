@@ -1,0 +1,93 @@
+[
+  {
+    "name": "openapi 3.0.3 uses the 3.0 specification",
+    "request": {
+      "operation": "validateSchema",
+      "schemaType": "openapi",
+      "version": "3.0",
+      "schema": { "openapi": "3.0.3", "info": { "title": "Test API", "version": "1.0.0" }, "paths": {} }
+    },
+    "expect": { "ok": true, "valid": true, "maxErrors": 0, "detected": { "type": "openapi", "version": "3.0.3" } }
+  },
+  {
+    "name": "openapi document is missing info",
+    "request": {
+      "operation": "validateSchema",
+      "schema": { "openapi": "3.0.0", "paths": {} }
+    },
+    "expect": { "ok": true, "valid": false, "minErrors": 1, "errorTypes": ["MISSING_REQUIRED_FIELD"] }
+  },
+  {
+    "name": "requested openapi version does not match the document",
+    "request": {
+      "operation": "validateSchema",
+      "schemaType": "openapi",
+      "version": "3.0",
+      "schema": { "openapi": "3.1.0", "info": { "title": "Test API", "version": "1.0.0" }, "paths": {} }
+    },
+    "expect": { "ok": true, "valid": false, "errorTypes": ["SCHEMA_VIOLATION"], "messageContains": "does not match requested version 3.0" }
+  },
+  {
+    "name": "openapi 3.1 document matches the bundled specification",
+    "request": {
+      "operation": "validateSchema",
+      "schema": {
+        "openapi": "3.1.0",
+        "info": { "title": "Test API", "version": "1.0.0" },
+        "paths": {}
+      }
+    },
+    "expect": { "ok": true, "valid": true, "maxErrors": 0, "draft": "2020-12", "detected": { "type": "openapi", "version": "3.1.0" } }
+  },
+  {
+    "name": "asyncapi 2.0 document matches the bundled specification",
+    "request": {
+      "operation": "validateSchema",
+      "version": "2.0.0",
+      "schema": {
+        "asyncapi": "2.0.0",
+        "info": { "title": "Test API", "version": "1.0.0" },
+        "channels": {}
+      }
+    },
+    "expect": { "ok": true, "valid": true, "maxErrors": 0, "detected": { "type": "asyncapi", "version": "2.0.0" } }
+  },
+  {
+    "name": "asyncapi 2.6 document is missing channels",
+    "request": {
+      "operation": "validateSchema",
+      "schema": { "asyncapi": "2.6.0", "info": { "title": "Test API", "version": "1.0.0" } }
+    },
+    "expect": { "ok": true, "valid": false, "minErrors": 1, "errorTypes": ["MISSING_REQUIRED_FIELD"] }
+  },
+  {
+    "name": "asyncapi 3.0 document matches the bundled specification",
+    "request": {
+      "operation": "validateSchema",
+      "schema": {
+        "asyncapi": "3.0.0",
+        "info": { "title": "Test API", "version": "1.0.0" },
+        "channels": {}
+      }
+    },
+    "expect": { "ok": true, "valid": true, "maxErrors": 0, "detected": { "type": "asyncapi", "version": "3.0.0" } }
+  },
+  {
+    "name": "requested json schema draft does not match $schema",
+    "request": {
+      "operation": "validateSchema",
+      "schemaType": "jsonschema",
+      "version": "draft-07",
+      "schema": { "$schema": "https://json-schema.org/draft/2020-12/schema", "type": "string" }
+    },
+    "expect": { "ok": true, "valid": false, "errorTypes": ["SCHEMA_VIOLATION"], "messageContains": "does not match requested version draft-07" }
+  },
+  {
+    "name": "unsupported openapi version is reported",
+    "request": {
+      "operation": "validateSchema",
+      "schema": { "openapi": "2.0.0", "info": { "title": "Swagger", "version": "1.0.0" }, "paths": {} }
+    },
+    "expect": { "ok": true, "valid": false, "errorTypes": ["SCHEMA_VIOLATION"], "messageContains": "unsupported openapi version: 2.0.0" }
+  }
+]

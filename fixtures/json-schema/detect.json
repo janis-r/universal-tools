@@ -1,0 +1,72 @@
+[
+  {
+    "name": "detect openapi",
+    "request": { "operation": "detect", "schema": { "openapi": "3.0.3", "info": { "title": "T", "version": "1" } } },
+    "expect": { "ok": true, "detected": { "type": "openapi", "version": "3.0.3" } }
+  },
+  {
+    "name": "detect asyncapi",
+    "request": { "operation": "detect", "schema": { "asyncapi": "2.6.0" } },
+    "expect": { "ok": true, "detected": { "type": "asyncapi", "version": "2.6.0" } }
+  },
+  {
+    "name": "detect draft-07",
+    "request": { "operation": "detect", "schema": { "$schema": "http://json-schema.org/draft-07/schema#" } },
+    "expect": { "ok": true, "detected": { "type": "jsonschema", "version": "draft-07" } }
+  },
+  {
+    "name": "detect draft-04",
+    "request": { "operation": "detect", "schema": { "$schema": "http://json-schema.org/draft-04/schema#" } },
+    "expect": { "ok": true, "detected": { "type": "jsonschema", "version": "draft-04" } }
+  },
+  {
+    "name": "detect draft-06",
+    "request": { "operation": "detect", "schema": { "$schema": "http://json-schema.org/draft-06/schema#" } },
+    "expect": { "ok": true, "detected": { "type": "jsonschema", "version": "draft-06" } }
+  },
+  {
+    "name": "detect 2020-12",
+    "request": { "operation": "detect", "schema": { "$schema": "https://json-schema.org/draft/2020-12/schema" } },
+    "expect": { "ok": true, "detected": { "type": "jsonschema", "version": "2020-12" } }
+  },
+  {
+    "name": "detect 2019-09",
+    "request": { "operation": "detect", "schema": { "$schema": "https://json-schema.org/draft/2019-09/schema" } },
+    "expect": { "ok": true, "detected": { "type": "jsonschema", "version": "2019-09" } }
+  },
+  {
+    "name": "unrecognized object",
+    "request": { "operation": "detect", "schema": { "foo": "bar" } },
+    "expect": { "ok": true, "detected": null }
+  },
+  {
+    "name": "non-object content",
+    "request": { "operation": "detect", "schema": "text" },
+    "expect": { "ok": true, "detected": null }
+  },
+  {
+    "name": "null content",
+    "request": { "operation": "detect", "schema": null },
+    "expect": { "ok": true, "detected": null }
+  },
+  {
+    "name": "openapi version must be a string",
+    "request": { "operation": "detect", "schema": { "openapi": 3 } },
+    "expect": { "ok": true, "detected": null }
+  },
+  {
+    "name": "asyncapi version must be a string",
+    "request": { "operation": "detect", "schema": { "asyncapi": 2 } },
+    "expect": { "ok": true, "detected": null }
+  },
+  {
+    "name": "$schema must be a string",
+    "request": { "operation": "detect", "schema": { "$schema": 7 } },
+    "expect": { "ok": true, "detected": null }
+  },
+  {
+    "name": "$schema outside json-schema.org is ignored",
+    "request": { "operation": "detect", "schema": { "$schema": "https://example.com/schema" } },
+    "expect": { "ok": true, "detected": null }
+  }
+]

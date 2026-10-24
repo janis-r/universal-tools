@@ -1,0 +1,7 @@
+/target/
+**/target/
+targets/js/**/pkg/
+targets/js/**/node_modules/
+targets/wasm/**/*.wasm
+**/__pycache__/
+.DS_Store

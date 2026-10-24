@@ -1,0 +1,214 @@
+[
+  {
+    "name": "draft-04 document is a valid schema",
+    "request": {
+      "operation": "validateSchema",
+      "schema": {
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "type": "object",
+        "properties": { "name": { "type": "string" }, "age": { "type": "number" } },
+        "required": ["name"]
+      }
+    },
+    "expect": { "ok": true, "valid": true, "maxErrors": 0, "draft": "draft-04" }
+  },
+  {
+    "name": "draft-04 rejects an unknown type",
+    "request": {
+      "operation": "validateSchema",
+      "schema": { "$schema": "http://json-schema.org/draft-04/schema#", "type": "invalid-type" }
+    },
+    "expect": { "ok": true, "valid": false, "minErrors": 1, "draft": "draft-04" }
+  },
+  {
+    "name": "draft-04 exclusiveMinimum boolean excludes the boundary",
+    "request": {
+      "operation": "validateData",
+      "schema": { "$schema": "http://json-schema.org/draft-04/schema#", "minimum": 0, "exclusiveMinimum": true },
+      "instance": 0
+    },
+    "expect": { "ok": true, "valid": false, "draft": "draft-04", "minErrors": 1 }
+  },
+  {
+    "name": "draft-04 exclusiveMinimum boolean allows a larger number",
+    "request": {
+      "operation": "validateData",
+      "schema": { "$schema": "http://json-schema.org/draft-04/schema#", "minimum": 0, "exclusiveMinimum": true },
+      "instance": 1
+    },
+    "expect": { "ok": true, "valid": true, "maxErrors": 0, "draft": "draft-04" }
+  },
+  {
+    "name": "draft-06 instance",
+    "request": {
+      "operation": "validateData",
+      "schema": { "$schema": "http://json-schema.org/draft-06/schema#", "type": "object", "properties": { "name": { "type": "string" } } },
+      "instance": { "name": "John" }
+    },
+    "expect": { "ok": true, "valid": true, "maxErrors": 0, "draft": "draft-06" }
+  },
+  {
+    "name": "draft-07 document is a valid schema",
+    "request": {
+      "operation": "validateSchema",
+      "schema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "name": { "type": "string", "minLength": 1, "maxLength": 100 },
+          "price": { "type": "number", "minimum": 0 },
+          "tags": { "type": "array", "items": { "type": "string" }, "uniqueItems": true }
+        },
+        "required": ["id", "name", "price"],
+        "additionalProperties": false
+      }
+    },
+    "expect": { "ok": true, "valid": true, "maxErrors": 0, "draft": "draft-07" }
+  },
+  {
+    "name": "draft-07 schema with an invalid property type",
+    "request": {
+      "operation": "validateSchema",
+      "schema": { "$schema": "http://json-schema.org/draft-07/schema#", "properties": { "name": { "type": "invalid-type" } } }
+    },
+    "expect": { "ok": true, "valid": false, "minErrors": 1 }
+  },
+  {
+    "name": "draft-07 schema with a non-numeric minimum",
+    "request": {
+      "operation": "validateSchema",
+      "schema": { "$schema": "http://json-schema.org/draft-07/schema#", "properties": { "age": { "type": "number", "minimum": "invalid" } } }
+    },
+    "expect": { "ok": true, "valid": false, "minErrors": 1 }
+  },
+  {
+    "name": "draft-07 schema with a broken pattern",
+    "request": {
+      "operation": "validateSchema",
+      "schema": { "$schema": "http://json-schema.org/draft-07/schema#", "properties": { "phone": { "type": "string", "pattern": "[invalid-regex" } } }
+    },
+    "expect": { "ok": true, "valid": false, "minErrors": 1 }
+  },
+  {
+    "name": "draft-07 schema with enum stored as a string",
+    "request": {
+      "operation": "validateSchema",
+      "schema": { "$schema": "http://json-schema.org/draft-07/schema#", "properties": { "status": { "enum": "invalid-enum-format" } } }
+    },
+    "expect": { "ok": true, "valid": false, "minErrors": 1 }
+  },
+  {
+    "name": "draft-07 circular refs are a valid schema",
+    "request": {
+      "operation": "validateSchema",
+      "schema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": { "parent": { "$ref": "#/properties/child" }, "child": { "$ref": "#/properties/parent" } }
+      }
+    },
+    "expect": { "ok": true, "valid": true, "maxErrors": 0 }
+  },
+  {
+    "name": "2019-09 instance",
+    "request": {
+      "operation": "validateData",
+      "schema": { "$schema": "https://json-schema.org/draft/2019-09/schema", "type": "object", "properties": { "name": { "type": "string" } } },
+      "instance": { "name": "John" }
+    },
+    "expect": { "ok": true, "valid": true, "maxErrors": 0, "draft": "2019-09" }
+  },
+  {
+    "name": "2020-12 document is a valid schema",
+    "request": {
+      "operation": "validateSchema",
+      "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": { "name": { "type": "string" }, "age": { "type": "number" } },
+        "required": ["name"]
+      }
+    },
+    "expect": { "ok": true, "valid": true, "maxErrors": 0, "draft": "2020-12" }
+  },
+  {
+    "name": "2020-12 schema with a dynamic ref is valid",
+    "request": {
+      "operation": "validateSchema",
+      "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$defs": { "person": { "type": "object", "properties": { "name": { "type": "string" } } } },
+        "type": "object",
+        "properties": { "user": { "$dynamicRef": "#/$defs/person" } }
+      }
+    },
+    "expect": { "ok": true, "valid": true, "maxErrors": 0 }
+  },
+  {
+    "name": "2020-12 schema rejects an unknown type",
+    "request": {
+      "operation": "validateSchema",
+      "schema": { "$schema": "https://json-schema.org/draft/2020-12/schema", "properties": { "name": { "type": "invalid-type" } } }
+    },
+    "expect": { "ok": true, "valid": false, "minErrors": 1 }
+  },
+  {
+    "name": "a schema with an invalid type fails closed",
+    "request": { "operation": "validateData", "schema": { "type": "invalid-type" }, "instance": {} },
+    "expect": { "ok": true, "valid": false, "exactTypes": true, "errorTypes": ["UNKNOWN_ERROR"] }
+  },
+  {
+    "name": "properties must be an object",
+    "request": { "operation": "validateData", "schema": { "properties": "should-be-object" }, "instance": {} },
+    "expect": { "ok": true, "valid": false, "exactTypes": true, "errorTypes": ["UNKNOWN_ERROR"] }
+  },
+  {
+    "name": "no $schema defaults to draft-07",
+    "request": { "operation": "validateData", "schema": { "type": "string" }, "instance": "hello" },
+    "expect": { "ok": true, "valid": true, "draft": "draft-07", "detected": null }
+  },
+  {
+    "name": "default draft rejects a non-string",
+    "request": { "operation": "validateData", "schema": { "type": "string" }, "instance": 123 },
+    "expect": { "ok": true, "valid": false, "minErrors": 1 }
+  },
+  {
+    "name": "openapi document can carry a schema fragment",
+    "request": {
+      "operation": "validateData",
+      "schema": { "openapi": "3.0.0", "info": { "title": "Test API", "version": "1.0.0" }, "paths": {} },
+      "instance": {}
+    },
+    "expect": { "ok": true, "valid": true, "maxErrors": 0, "detected": { "type": "openapi", "version": "3.0.0" } }
+  },
+  {
+    "name": "openapi 3.1 is validated as 2020-12",
+    "request": {
+      "operation": "validateData",
+      "pointer": "#/components/schemas/Pet",
+      "schema": {
+        "openapi": "3.1.0",
+        "info": { "title": "Pets", "version": "1.0.0" },
+        "paths": {},
+        "components": { "schemas": { "Pet": { "type": "object", "properties": { "name": { "type": "string" } }, "required": ["name"] } } }
+      },
+      "instance": { "name": "Fluffy" }
+    },
+    "expect": { "ok": true, "valid": true, "draft": "2020-12" }
+  },
+  {
+    "name": "openapi 3.0 document matches the bundled specification",
+    "request": {
+      "operation": "validateSchema",
+      "schema": { "openapi": "3.0.0", "info": { "title": "Test API", "version": "1.0.0" }, "paths": {} }
+    },
+    "expect": {
+      "ok": true,
+      "valid": true,
+      "maxErrors": 0,
+      "draft": "draft-04",
+      "detected": { "type": "openapi", "version": "3.0.0" }
+    }
+  }
+]

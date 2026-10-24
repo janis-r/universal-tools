@@ -1,0 +1,13 @@
+{
+  "name": "@universal-tools/json-schema",
+  "version": "0.1.0",
+  "private": true,
+  "description": "JavaScript bindings for the universal-tools JSON Schema validator",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "node --experimental-strip-types --test tests/fixtures.test.ts tests/api.test.ts"
+  }
+}

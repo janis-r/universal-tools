@@ -1,0 +1,115 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://universal-tools.local/contracts/json-schema/output",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["ok", "operation", "resources"],
+  "properties": {
+    "ok": { "type": "boolean" },
+    "operation": { "type": "string" },
+    "output": { "$ref": "#/$defs/output" },
+    "error": { "$ref": "#/$defs/toolError" },
+    "resources": { "$ref": "#/$defs/resources" }
+  },
+  "$defs": {
+    "toolError": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "message"],
+      "properties": {
+        "code": {
+          "type": "string",
+          "enum": ["INVALID_INPUT", "RESOURCE_LIMIT", "CONTRACT_VIOLATION", "INTERNAL"]
+        },
+        "message": { "type": "string" },
+        "errors": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/validationError" }
+        }
+      }
+    },
+    "validationError": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "message"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "MISSING_REQUIRED_FIELD",
+            "INVALID_TYPE",
+            "INVALID_FORMAT",
+            "CONSTRAINT_VIOLATION",
+            "PATTERN_MISMATCH",
+            "ENUM_MISMATCH",
+            "INVALID_REFERENCE",
+            "SCHEMA_VIOLATION",
+            "UNKNOWN_ERROR"
+          ]
+        },
+        "message": { "type": "string" },
+        "path": { "type": "string" },
+        "details": { "type": "object" }
+      }
+    },
+    "detected": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "version"],
+      "properties": {
+        "type": { "type": "string", "enum": ["openapi", "asyncapi", "jsonschema"] },
+        "version": { "type": "string" }
+      }
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "valid": { "type": "boolean" },
+        "errors": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/validationError" }
+        },
+        "detected": {
+          "anyOf": [{ "type": "null" }, { "$ref": "#/$defs/detected" }]
+        },
+        "draft": { "type": "string" },
+        "compiled": { "type": "boolean" },
+        "initError": {
+          "anyOf": [{ "type": "null" }, { "$ref": "#/$defs/validationError" }]
+        },
+        "description": { "type": "object" }
+      }
+    },
+    "resources": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["elapsedMicros", "peakBytes", "allocatedBytes", "withinBudget", "budget"],
+      "properties": {
+        "elapsedMicros": { "type": "integer", "minimum": 0 },
+        "peakBytes": { "type": "integer", "minimum": 0 },
+        "allocatedBytes": { "type": "integer", "minimum": 0 },
+        "withinBudget": { "type": "boolean" },
+        "budget": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["maxElapsedMicros", "maxPeakBytes"],
+          "properties": {
+            "maxElapsedMicros": { "type": "integer", "minimum": 0 },
+            "maxPeakBytes": { "type": "integer", "minimum": 0 }
+          }
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "type": "object",
+        "properties": { "ok": { "const": false } },
+        "required": ["ok"]
+      },
+      "then": { "required": ["error"] }
+    }
+  ]
+}

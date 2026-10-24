@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://universal-tools.local/contracts/json-schema/input",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["operation"],
+  "properties": {
+    "operation": {
+      "type": "string",
+      "enum": ["detect", "compile", "validateData", "validateSchema", "describe", "burn"]
+    },
+    "schema": true,
+    "instance": true,
+    "pointer": { "type": "string" },
+    "draft": {
+      "type": "string",
+      "enum": ["draft-04", "draft-06", "draft-07", "2019-09", "2020-12"]
+    },
+    "schemaType": {
+      "type": "string",
+      "enum": ["jsonschema", "openapi", "asyncapi"]
+    },
+    "version": { "type": "string", "minLength": 1 },
+    "burnMicros": { "type": "integer", "minimum": 0, "maximum": 2000000 },
+    "budget": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "maxElapsedMicros": { "type": "integer", "minimum": 0 },
+        "maxPeakBytes": { "type": "integer", "minimum": 0 }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "type": "object",
+        "properties": { "operation": { "const": "validateData" } },
+        "required": ["operation"]
+      },
+      "then": { "required": ["schema", "instance"] }
+    },
+    {
+      "if": {
+        "type": "object",
+        "properties": { "operation": { "const": "compile" } },
+        "required": ["operation"]
+      },
+      "then": { "required": ["schema"] }
+    },
+    {
+      "if": {
+        "type": "object",
+        "properties": { "operation": { "const": "validateSchema" } },
+        "required": ["operation"]
+      },
+      "then": { "required": ["schema"] }
+    },
+    {
+      "if": {
+        "type": "object",
+        "properties": { "operation": { "const": "detect" } },
+        "required": ["operation"]
+      },
+      "then": { "required": ["schema"] }
+    },
+    {
+      "if": {
+        "type": "object",
+        "properties": { "operation": { "const": "burn" } },
+        "required": ["operation"]
+      },
+      "then": { "required": ["burnMicros"] }
+    }
+  ]
+}

@@ -1,0 +1,675 @@
+[
+  {
+    "name": "object type accepts a string property and rejects a number",
+    "request": {
+      "operation": "validateData",
+      "schema": { "type": "object", "properties": { "name": { "type": "string" } } },
+      "instance": { "name": "John" }
+    },
+    "expect": { "ok": true, "valid": true, "maxErrors": 0, "draft": "draft-07" }
+  },
+  {
+    "name": "type mismatch",
+    "request": {
+      "operation": "validateData",
+      "schema": { "type": "object", "properties": { "name": { "type": "string" } } },
+      "instance": { "name": 123 }
+    },
+    "expect": { "ok": true, "valid": false, "exactTypes": true, "errorTypes": ["INVALID_TYPE"] }
+  },
+  {
+    "name": "required, type, and a valid object",
+    "request": {
+      "operation": "validateData",
+      "schema": {
+        "type": "object",
+        "properties": { "name": { "type": "string" }, "age": { "type": "number" } },
+        "required": ["name"]
+      },
+      "instance": { "name": "John", "age": 30 }
+    },
+    "expect": { "ok": true, "valid": true, "maxErrors": 0 }
+  },
+  {
+    "name": "missing required field",
+    "request": {
+      "operation": "validateData",
+      "schema": {
+        "type": "object",
+        "properties": { "name": { "type": "string" }, "age": { "type": "number" } },
+        "required": ["name"]
+      },
+      "instance": { "age": 30 }
+    },
+    "expect": { "ok": true, "valid": false, "exactTypes": true, "errorTypes": ["MISSING_REQUIRED_FIELD"] }
+  },
+  {
+    "name": "property type mismatch",
+    "request": {
+      "operation": "validateData",
+      "schema": {
+        "type": "object",
+        "properties": { "name": { "type": "string" }, "age": { "type": "number" } },
+        "required": ["name"]
+      },
+      "instance": { "name": "John", "age": "thirty" }
+    },
+    "expect": { "ok": true, "valid": false, "exactTypes": true, "errorTypes": ["INVALID_TYPE"] }
+  },
+  {
+    "name": "null is not an object",
+    "request": {
+      "operation": "validateData",
+      "schema": { "type": "object", "properties": { "name": { "type": "string" } } },
+      "instance": null
+    },
+    "expect": { "ok": true, "valid": false, "errorTypes": ["INVALID_TYPE"] }
+  },
+  {
+    "name": "array length bounds",
+    "request": {
+      "operation": "validateData",
+      "schema": { "type": "array", "items": { "type": "string" }, "minItems": 1, "maxItems": 5 },
+      "instance": ["a", "b", "c"]
+    },
+    "expect": { "ok": true, "valid": true, "maxErrors": 0 }
+  },
+  {
+    "name": "array below minItems",
+    "request": {
+      "operation": "validateData",
+      "schema": { "type": "array", "items": { "type": "string" }, "minItems": 1, "maxItems": 5 },
+      "instance": []
+    },
+    "expect": { "ok": true, "valid": false, "errorTypes": ["CONSTRAINT_VIOLATION"], "minErrors": 1, "maxErrors": 1 }
+  },
+  {
+    "name": "array above maxItems",
+    "request": {
+      "operation": "validateData",
+      "schema": { "type": "array", "items": { "type": "string" }, "minItems": 1, "maxItems": 5 },
+      "instance": ["a", "b", "c", "d", "e", "f"]
+    },
+    "expect": { "ok": true, "valid": false, "errorTypes": ["CONSTRAINT_VIOLATION"], "minErrors": 1 }
+  },
+  {
+    "name": "string length and pattern",
+    "request": {
+      "operation": "validateData",
+      "schema": { "type": "string", "minLength": 3, "maxLength": 10, "pattern": "^[a-z]+$" },
+      "instance": "hello"
+    },
+    "expect": { "ok": true, "valid": true, "maxErrors": 0 }
+  },
+  {
+    "name": "string shorter than minLength",
+    "request": {
+      "operation": "validateData",
+      "schema": { "type": "string", "minLength": 3, "maxLength": 10, "pattern": "^[a-z]+$" },
+      "instance": "hi"
+    },
+    "expect": { "ok": true, "valid": false, "errorTypes": ["CONSTRAINT_VIOLATION"] }
+  },
+  {
+    "name": "string at maxLength is valid",
+    "request": {
+      "operation": "validateData",
+      "schema": { "type": "string", "minLength": 3, "maxLength": 10, "pattern": "^[a-z]+$" },
+      "instance": "helloworld"
+    },
+    "expect": { "ok": true, "valid": true, "maxErrors": 0 }
+  },
+  {
+    "name": "pattern mismatch",
+    "request": {
+      "operation": "validateData",
+      "schema": { "type": "string", "minLength": 3, "maxLength": 10, "pattern": "^[a-z]+$" },
+      "instance": "Hello"
+    },
+    "expect": { "ok": true, "valid": false, "exactTypes": true, "errorTypes": ["PATTERN_MISMATCH"] }
+  },
+  {
+    "name": "number multiple of five",
+    "request": {
+      "operation": "validateData",
+      "schema": { "type": "number", "minimum": 0, "maximum": 100, "multipleOf": 5 },
+      "instance": 50
+    },
+    "expect": { "ok": true, "valid": true, "maxErrors": 0 }
+  },
+  {
+    "name": "number below minimum",
+    "request": {
+      "operation": "validateData",
+      "schema": { "type": "number", "minimum": 0, "maximum": 100, "multipleOf": 5 },
+      "instance": -10
+    },
+    "expect": { "ok": true, "valid": false, "errorTypes": ["CONSTRAINT_VIOLATION"], "minErrors": 1 }
+  },
+  {
+    "name": "number above maximum",
+    "request": {
+      "operation": "validateData",
+      "schema": { "type": "number", "minimum": 0, "maximum": 100, "multipleOf": 5 },
+      "instance": 150
+    },
+    "expect": { "ok": true, "valid": false, "errorTypes": ["CONSTRAINT_VIOLATION"] }
+  },
+  {
+    "name": "number not a multiple",
+    "request": {
+      "operation": "validateData",
+      "schema": { "type": "number", "minimum": 0, "maximum": 100, "multipleOf": 5 },
+      "instance": 47
+    },
+    "expect": { "ok": true, "valid": false, "errorTypes": ["CONSTRAINT_VIOLATION"] }
+  },
+  {
+    "name": "enum member",
+    "request": {
+      "operation": "validateData",
+      "schema": { "type": "string", "enum": ["red", "green", "blue"] },
+      "instance": "red"
+    },
+    "expect": { "ok": true, "valid": true, "maxErrors": 0 }
+  },
+  {
+    "name": "enum mismatch",
+    "request": {
+      "operation": "validateData",
+      "schema": { "type": "string", "enum": ["red", "green", "blue"] },
+      "instance": "yellow"
+    },
+    "expect": { "ok": true, "valid": false, "exactTypes": true, "errorTypes": ["ENUM_MISMATCH"] }
+  },
+  {
+    "name": "email format",
+    "request": {
+      "operation": "validateData",
+      "schema": { "type": "string", "format": "email" },
+      "instance": "test@example.com"
+    },
+    "expect": { "ok": true, "valid": true, "maxErrors": 0 }
+  },
+  {
+    "name": "invalid email format",
+    "request": {
+      "operation": "validateData",
+      "schema": { "type": "string", "format": "email" },
+      "instance": "not-an-email"
+    },
+    "expect": { "ok": true, "valid": false, "exactTypes": true, "errorTypes": ["INVALID_FORMAT"] }
+  },
+  {
+    "name": "date-time format",
+    "request": {
+      "operation": "validateData",
+      "schema": { "type": "string", "format": "date-time" },
+      "instance": "2023-01-01T00:00:00Z"
+    },
+    "expect": { "ok": true, "valid": true, "maxErrors": 0 }
+  },
+  {
+    "name": "uuid format",
+    "request": {
+      "operation": "validateData",
+      "schema": { "type": "string", "format": "uuid" },
+      "instance": "550e8400-e29b-41d4-a716-446655440000"
+    },
+    "expect": { "ok": true, "valid": true, "maxErrors": 0 }
+  },
+  {
+    "name": "unknown format is ignored",
+    "request": {
+      "operation": "validateData",
+      "schema": { "type": "string", "format": "custom-format" },
+      "instance": "anything"
+    },
+    "expect": { "ok": true, "valid": true, "maxErrors": 0 }
+  },
+  {
+    "name": "const match",
+    "request": {
+      "operation": "validateData",
+      "schema": { "const": 1 },
+      "instance": 1
+    },
+    "expect": { "ok": true, "valid": true, "maxErrors": 0 }
+  },
+  {
+    "name": "const mismatch",
+    "request": {
+      "operation": "validateData",
+      "schema": { "const": 1 },
+      "instance": 2
+    },
+    "expect": { "ok": true, "valid": false, "errorTypes": ["ENUM_MISMATCH"] }
+  },
+  {
+    "name": "integer rejects a fraction",
+    "request": {
+      "operation": "validateData",
+      "schema": { "type": "integer" },
+      "instance": 1.5
+    },
+    "expect": { "ok": true, "valid": false, "errorTypes": ["INVALID_TYPE"] }
+  },
+  {
+    "name": "integer accepts a whole number",
+    "request": {
+      "operation": "validateData",
+      "schema": { "type": "integer" },
+      "instance": 2
+    },
+    "expect": { "ok": true, "valid": true, "maxErrors": 0 }
+  },
+  {
+    "name": "null type",
+    "request": {
+      "operation": "validateData",
+      "schema": { "type": "null" },
+      "instance": null
+    },
+    "expect": { "ok": true, "valid": true, "maxErrors": 0 }
+  },
+  {
+    "name": "boolean schema true accepts every instance",
+    "request": { "operation": "validateData", "schema": true, "instance": { "any": [1, "a"] } },
+    "expect": { "ok": true, "valid": true, "maxErrors": 0 }
+  },
+  {
+    "name": "boolean schema false rejects every instance",
+    "request": { "operation": "validateData", "schema": false, "instance": 1 },
+    "expect": { "ok": true, "valid": false, "minErrors": 1 }
+  },
+  {
+    "name": "allOf",
+    "request": {
+      "operation": "validateData",
+      "schema": { "allOf": [{ "type": "object" }, { "properties": { "name": { "type": "string" } }, "required": ["name"] }] },
+      "instance": { "name": "John" }
+    },
+    "expect": { "ok": true, "valid": true, "maxErrors": 0 }
+  },
+  {
+    "name": "allOf missing required",
+    "request": {
+      "operation": "validateData",
+      "schema": { "allOf": [{ "type": "object" }, { "properties": { "name": { "type": "string" } }, "required": ["name"] }] },
+      "instance": {}
+    },
+    "expect": { "ok": true, "valid": false, "minErrors": 1, "errorTypes": ["MISSING_REQUIRED_FIELD"] }
+  },
+  {
+    "name": "anyOf string",
+    "request": { "operation": "validateData", "schema": { "anyOf": [{ "type": "string" }, { "type": "number" }] }, "instance": "hello" },
+    "expect": { "ok": true, "valid": true, "maxErrors": 0 }
+  },
+  {
+    "name": "anyOf number",
+    "request": { "operation": "validateData", "schema": { "anyOf": [{ "type": "string" }, { "type": "number" }] }, "instance": 42 },
+    "expect": { "ok": true, "valid": true, "maxErrors": 0 }
+  },
+  {
+    "name": "anyOf neither",
+    "request": { "operation": "validateData", "schema": { "anyOf": [{ "type": "string" }, { "type": "number" }] }, "instance": true },
+    "expect": { "ok": true, "valid": false, "minErrors": 1 }
+  },
+  {
+    "name": "oneOf string",
+    "request": { "operation": "validateData", "schema": { "oneOf": [{ "type": "string" }, { "type": "number" }] }, "instance": "hello" },
+    "expect": { "ok": true, "valid": true, "maxErrors": 0 }
+  },
+  {
+    "name": "oneOf neither",
+    "request": { "operation": "validateData", "schema": { "oneOf": [{ "type": "string" }, { "type": "number" }] }, "instance": true },
+    "expect": { "ok": true, "valid": false, "minErrors": 1 }
+  },
+  {
+    "name": "not string accepts a number",
+    "request": { "operation": "validateData", "schema": { "not": { "type": "string" } }, "instance": 42 },
+    "expect": { "ok": true, "valid": true, "maxErrors": 0 }
+  },
+  {
+    "name": "not string rejects a string",
+    "request": { "operation": "validateData", "schema": { "not": { "type": "string" } }, "instance": "hello" },
+    "expect": { "ok": true, "valid": false, "minErrors": 1, "maxErrors": 1 }
+  },
+  {
+    "name": "additionalProperties false",
+    "request": {
+      "operation": "validateData",
+      "schema": {
+        "type": "object",
+        "properties": { "id": { "type": "string" }, "message": { "type": "string" } },
+        "required": ["id", "message"],
+        "additionalProperties": false
+      },
+      "instance": { "id": "1", "message": "ok", "extra": true }
+    },
+    "expect": { "ok": true, "valid": false, "exactTypes": true, "errorTypes": ["SCHEMA_VIOLATION"] }
+  },
+  {
+    "name": "uniqueItems",
+    "request": {
+      "operation": "validateData",
+      "schema": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+      "instance": ["tech", "programming", "tech"]
+    },
+    "expect": { "ok": true, "valid": false, "errorTypes": ["SCHEMA_VIOLATION"] }
+  },
+  {
+    "name": "dependencies",
+    "request": {
+      "operation": "validateData",
+      "schema": {
+        "type": "object",
+        "properties": { "credit_card": { "type": "string" }, "billing_address": { "type": "string" } },
+        "dependencies": { "credit_card": ["billing_address"] }
+      },
+      "instance": { "credit_card": "4111" }
+    },
+    "expect": { "ok": true, "valid": false, "minErrors": 1 }
+  },
+  {
+    "name": "dependencies satisfied",
+    "request": {
+      "operation": "validateData",
+      "schema": {
+        "type": "object",
+        "properties": { "credit_card": { "type": "string" }, "billing_address": { "type": "string" } },
+        "dependencies": { "credit_card": ["billing_address"] }
+      },
+      "instance": { "credit_card": "4111", "billing_address": "1 Main" }
+    },
+    "expect": { "ok": true, "valid": true, "maxErrors": 0 }
+  },
+  {
+    "name": "patternProperties",
+    "request": {
+      "operation": "validateData",
+      "schema": { "patternProperties": { "^S_": { "type": "string" } }, "additionalProperties": false },
+      "instance": { "S_name": "a" }
+    },
+    "expect": { "ok": true, "valid": true, "maxErrors": 0 }
+  },
+  {
+    "name": "patternProperties type mismatch",
+    "request": {
+      "operation": "validateData",
+      "schema": { "patternProperties": { "^S_": { "type": "string" } }, "additionalProperties": false },
+      "instance": { "S_age": 1 }
+    },
+    "expect": { "ok": true, "valid": false, "errorTypes": ["INVALID_TYPE"] }
+  },
+  {
+    "name": "propertyNames",
+    "request": {
+      "operation": "validateData",
+      "schema": { "propertyNames": { "pattern": "^[a-z]+$" } },
+      "instance": { "Bad": 1 }
+    },
+    "expect": { "ok": true, "valid": false, "minErrors": 1 }
+  },
+  {
+    "name": "minProperties and maxProperties",
+    "request": {
+      "operation": "validateData",
+      "schema": { "type": "object", "minProperties": 1, "maxProperties": 2 },
+      "instance": {}
+    },
+    "expect": { "ok": true, "valid": false, "errorTypes": ["CONSTRAINT_VIOLATION"] }
+  },
+  {
+    "name": "contains",
+    "request": {
+      "operation": "validateData",
+      "schema": { "type": "array", "contains": { "type": "number", "minimum": 10 }, "minContains": 1 },
+      "instance": ["a", 3]
+    },
+    "expect": { "ok": true, "valid": false, "minErrors": 1 }
+  },
+  {
+    "name": "if then requires postal for US",
+    "request": {
+      "operation": "validateData",
+      "schema": {
+        "if": { "properties": { "country": { "const": "US" } }, "required": ["country"] },
+        "then": { "required": ["postal"], "properties": { "postal": { "pattern": "^[0-9]{5}$" } } }
+      },
+      "instance": { "country": "US" }
+    },
+    "expect": { "ok": true, "valid": false, "errorTypes": ["MISSING_REQUIRED_FIELD"] }
+  },
+  {
+    "name": "if then skips other countries",
+    "request": {
+      "operation": "validateData",
+      "schema": {
+        "if": { "properties": { "country": { "const": "US" } }, "required": ["country"] },
+        "then": { "required": ["postal"] }
+      },
+      "instance": { "country": "CA" }
+    },
+    "expect": { "ok": true, "valid": true, "maxErrors": 0 }
+  },
+  {
+    "name": "draft-07 tuple items",
+    "request": {
+      "operation": "validateData",
+      "schema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "items": [{ "type": "string" }, { "type": "number" }],
+        "additionalItems": false
+      },
+      "instance": ["a", 1, true]
+    },
+    "expect": { "ok": true, "valid": false, "minErrors": 1, "draft": "draft-07" }
+  },
+  {
+    "name": "internal $ref",
+    "request": {
+      "operation": "validateData",
+      "schema": {
+        "definitions": { "person": { "type": "object", "properties": { "name": { "type": "string" } }, "required": ["name"] } },
+        "$ref": "#/definitions/person"
+      },
+      "instance": { "name": "John" }
+    },
+    "expect": { "ok": true, "valid": true, "maxErrors": 0 }
+  },
+  {
+    "name": "internal $ref missing required",
+    "request": {
+      "operation": "validateData",
+      "schema": {
+        "definitions": { "person": { "type": "object", "properties": { "name": { "type": "string" } }, "required": ["name"] } },
+        "$ref": "#/definitions/person"
+      },
+      "instance": {}
+    },
+    "expect": { "ok": true, "valid": false, "errorTypes": ["MISSING_REQUIRED_FIELD"] }
+  },
+  {
+    "name": "$defs ref",
+    "request": {
+      "operation": "validateData",
+      "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$defs": { "person": { "type": "object", "properties": { "name": { "type": "string" } }, "required": ["name"] } },
+        "$ref": "#/$defs/person"
+      },
+      "instance": { "name": "John" }
+    },
+    "expect": { "ok": true, "valid": true, "maxErrors": 0, "draft": "2020-12" }
+  },
+  {
+    "name": "$anchor",
+    "request": {
+      "operation": "validateData",
+      "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$defs": { "person": { "$anchor": "person", "type": "object", "properties": { "name": { "type": "string" } }, "required": ["name"] } },
+        "$ref": "#person"
+      },
+      "instance": { "name": "John" }
+    },
+    "expect": { "ok": true, "valid": true, "maxErrors": 0 }
+  },
+  {
+    "name": "$anchor rejects an empty object",
+    "request": {
+      "operation": "validateData",
+      "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$defs": { "person": { "$anchor": "person", "type": "object", "properties": { "name": { "type": "string" } }, "required": ["name"] } },
+        "$ref": "#person"
+      },
+      "instance": {}
+    },
+    "expect": { "ok": true, "valid": false, "errorTypes": ["MISSING_REQUIRED_FIELD"] }
+  },
+  {
+    "name": "dependentRequired",
+    "request": {
+      "operation": "validateData",
+      "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "dependentRequired": { "credit_card": ["billing_address"] }
+      },
+      "instance": { "credit_card": "4111" }
+    },
+    "expect": { "ok": true, "valid": false, "errorTypes": ["MISSING_REQUIRED_FIELD"] }
+  },
+  {
+    "name": "prefixItems",
+    "request": {
+      "operation": "validateData",
+      "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "prefixItems": [{ "type": "string" }, { "type": "number" }],
+        "items": false
+      },
+      "instance": ["hello", 42]
+    },
+    "expect": { "ok": true, "valid": true, "maxErrors": 0 }
+  },
+  {
+    "name": "prefixItems extra item",
+    "request": {
+      "operation": "validateData",
+      "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "prefixItems": [{ "type": "string" }, { "type": "number" }],
+        "items": false
+      },
+      "instance": ["hello", 42, true]
+    },
+    "expect": { "ok": true, "valid": false, "minErrors": 1 }
+  },
+  {
+    "name": "unevaluatedProperties allows declared properties",
+    "request": {
+      "operation": "validateData",
+      "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": { "name": { "type": "string" } },
+        "unevaluatedProperties": false
+      },
+      "instance": { "name": "John" }
+    },
+    "expect": { "ok": true, "valid": true, "maxErrors": 0 }
+  },
+  {
+    "name": "unevaluatedProperties rejects an extra property",
+    "request": {
+      "operation": "validateData",
+      "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": { "name": { "type": "string" } },
+        "unevaluatedProperties": false
+      },
+      "instance": { "name": "John", "extra": 1 }
+    },
+    "expect": { "ok": true, "valid": false, "minErrors": 1 }
+  },
+  {
+    "name": "unevaluatedItems",
+    "request": {
+      "operation": "validateData",
+      "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "prefixItems": [{ "type": "string" }],
+        "unevaluatedItems": false
+      },
+      "instance": ["a", "b"]
+    },
+    "expect": { "ok": true, "valid": false, "minErrors": 1 }
+  },
+  {
+    "name": "dynamic anchor tree",
+    "request": {
+      "operation": "validateData",
+      "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$dynamicAnchor": "tree",
+        "type": "object",
+        "properties": { "value": { "type": "string" }, "children": { "type": "array", "items": { "$dynamicRef": "#tree" } } }
+      },
+      "instance": { "value": "root", "children": [{ "value": "child1" }, { "value": "child2", "children": [{ "value": "grandchild" }] }] }
+    },
+    "expect": { "ok": true, "valid": true, "maxErrors": 0 }
+  },
+  {
+    "name": "dynamic anchor rejects a bad child",
+    "request": {
+      "operation": "validateData",
+      "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$dynamicAnchor": "tree",
+        "type": "object",
+        "properties": { "value": { "type": "string" }, "children": { "type": "array", "items": { "$dynamicRef": "#tree" } } }
+      },
+      "instance": { "value": "root", "children": [{ "value": 1 }] }
+    },
+    "expect": { "ok": true, "valid": false, "errorTypes": ["INVALID_TYPE"] }
+  },
+  {
+    "name": "unresolved external ref fails initialization",
+    "request": {
+      "operation": "validateData",
+      "schema": { "$ref": "http://example.com/unknown-schema#" },
+      "instance": { "name": "a" }
+    },
+    "expect": { "ok": true, "valid": false, "exactTypes": true, "errorTypes": ["UNKNOWN_ERROR"], "messageContains": "Initialization failed" }
+  },
+  {
+    "name": "meta-schema ref accepts a valid schema document",
+    "request": {
+      "operation": "validateData",
+      "schema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": { "draft07Schema": { "$ref": "http://json-schema.org/draft-07/schema#" } }
+      },
+      "instance": { "draft07Schema": { "type": "object", "properties": { "name": { "type": "string" } } } }
+    },
+    "expect": { "ok": true, "valid": true, "maxErrors": 0 }
+  },
+  {
+    "name": "meta-schema ref rejects an invalid type name",
+    "request": {
+      "operation": "validateData",
+      "schema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": { "draft07Schema": { "$ref": "http://json-schema.org/draft-07/schema#" } }
+      },
+      "instance": { "draft07Schema": { "type": "invalid-type" } }
+    },
+    "expect": { "ok": true, "valid": false, "minErrors": 1 }
+  }
+]

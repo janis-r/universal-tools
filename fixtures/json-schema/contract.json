@@ -1,0 +1,50 @@
+[
+  {
+    "name": "describe reports the tool",
+    "request": { "operation": "describe" },
+    "expect": { "ok": true, "withinBudget": true }
+  },
+  {
+    "name": "unknown operation is rejected by the input contract",
+    "request": { "operation": "nope" },
+    "expect": { "ok": false, "errorCode": "INVALID_INPUT", "withinBudget": true }
+  },
+  {
+    "name": "validateData requires an instance",
+    "request": { "operation": "validateData", "schema": { "type": "string" } },
+    "expect": { "ok": false, "errorCode": "INVALID_INPUT" }
+  },
+  {
+    "name": "a non-json request is rejected",
+    "requestRaw": "{",
+    "expect": { "ok": false, "errorCode": "INVALID_INPUT" }
+  },
+  {
+    "name": "cpu budget rejects a burn that exceeds it",
+    "request": {
+      "operation": "burn",
+      "burnMicros": 40000,
+      "budget": { "maxElapsedMicros": 10000, "maxPeakBytes": 134217728 }
+    },
+    "expect": { "ok": false, "errorCode": "RESOURCE_LIMIT", "withinBudget": false }
+  },
+  {
+    "name": "a short burn stays inside the default budget",
+    "request": {
+      "operation": "burn",
+      "burnMicros": 1000,
+      "budget": { "maxElapsedMicros": 5000000, "maxPeakBytes": 134217728 }
+    },
+    "expect": { "ok": true, "withinBudget": true }
+  },
+  {
+    "name": "memory budget rejects compilation when the ceiling is one byte",
+    "request": {
+      "operation": "validateData",
+      "schema": { "type": "string" },
+      "instance": "hi",
+      "budget": { "maxElapsedMicros": 5000000, "maxPeakBytes": 1 }
+    },
+    "expect": { "ok": false, "errorCode": "RESOURCE_LIMIT", "withinBudget": false }
+  }
+]

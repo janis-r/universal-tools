@@ -1,0 +1,420 @@
+[
+  {
+    "name": "fragment pointer",
+    "request": {
+      "operation": "validateData",
+      "pointer": "#/components/schemas/User",
+      "schema": {
+        "components": {
+          "schemas": {
+            "User": {
+              "type": "object",
+              "properties": { "name": { "type": "string" }, "age": { "type": "number" } },
+              "required": ["name"]
+            }
+          }
+        }
+      },
+      "instance": { "name": "John", "age": 30 }
+    },
+    "expect": { "ok": true, "valid": true, "maxErrors": 0 }
+  },
+  {
+    "name": "openapi component fragment",
+    "request": {
+      "operation": "validateData",
+      "pointer": "#/components/schemas/Pet",
+      "schema": {
+        "openapi": "3.0.0",
+        "info": { "title": "Test API", "version": "1.0.0" },
+        "paths": {},
+        "components": {
+          "schemas": {
+            "Pet": {
+              "type": "object",
+              "properties": { "name": { "type": "string" }, "type": { "type": "string" } },
+              "required": ["name"]
+            }
+          }
+        }
+      },
+      "instance": { "name": "Fluffy", "type": "cat" }
+    },
+    "expect": { "ok": true, "valid": true, "maxErrors": 0 }
+  },
+  {
+    "name": "escaped pointer",
+    "request": {
+      "operation": "validateData",
+      "pointer": "#/foo~0bar/baz~1qux",
+      "schema": { "foo~bar": { "baz/qux": { "type": "string" } } },
+      "instance": "test"
+    },
+    "expect": { "ok": true, "valid": true, "maxErrors": 0 }
+  },
+  {
+    "name": "fragment keeps sibling refs",
+    "request": {
+      "operation": "validateData",
+      "pointer": "#/components/schemas/User",
+      "schema": {
+        "definitions": {
+          "Address": {
+            "type": "object",
+            "properties": {
+              "street": { "type": "string" },
+              "city": { "type": "string" },
+              "zipCode": { "type": "string", "pattern": "^\\d{5}$" }
+            },
+            "required": ["street", "city", "zipCode"]
+          }
+        },
+        "components": {
+          "schemas": {
+            "User": {
+              "type": "object",
+              "properties": {
+                "name": { "type": "string" },
+                "email": { "type": "string", "format": "email" },
+                "address": { "$ref": "#/definitions/Address" }
+              },
+              "required": ["name", "email", "address"]
+            }
+          }
+        }
+      },
+      "instance": {
+        "name": "John Doe",
+        "email": "john@example.com",
+        "address": { "street": "123 Main St", "city": "Springfield", "zipCode": "12345" }
+      }
+    },
+    "expect": { "ok": true, "valid": true, "maxErrors": 0 }
+  },
+  {
+    "name": "fragment ref reports a missing field",
+    "request": {
+      "operation": "validateData",
+      "pointer": "#/components/schemas/User",
+      "schema": {
+        "definitions": { "Address": { "type": "object", "required": ["street"] } },
+        "components": {
+          "schemas": {
+            "User": {
+              "type": "object",
+              "properties": { "name": { "type": "string" }, "address": { "$ref": "#/definitions/Address" } },
+              "required": ["name", "address"]
+            }
+          }
+        }
+      },
+      "instance": { "name": "Jane Doe" }
+    },
+    "expect": { "ok": true, "valid": false, "errorTypes": ["MISSING_REQUIRED_FIELD"] }
+  },
+  {
+    "name": "fragment ref reports a pattern mismatch",
+    "request": {
+      "operation": "validateData",
+      "pointer": "#/components/schemas/User",
+      "schema": {
+        "definitions": {
+          "Address": {
+            "type": "object",
+            "properties": { "zipCode": { "type": "string", "pattern": "^\\d{5}$" } },
+            "required": ["zipCode"]
+          }
+        },
+        "components": {
+          "schemas": {
+            "User": {
+              "type": "object",
+              "properties": { "address": { "$ref": "#/definitions/Address" } },
+              "required": ["address"]
+            }
+          }
+        }
+      },
+      "instance": { "address": { "zipCode": "abc123" } }
+    },
+    "expect": { "ok": true, "valid": false, "errorTypes": ["PATTERN_MISMATCH"] }
+  },
+  {
+    "name": "missing pointer property",
+    "request": {
+      "operation": "validateData",
+      "pointer": "#/nonexistent/path",
+      "schema": { "type": "string" },
+      "instance": "test"
+    },
+    "expect": { "ok": true, "valid": false, "errorTypes": ["UNKNOWN_ERROR"], "messageContains": "property \"nonexistent\" not found" }
+  },
+  {
+    "name": "pointer through null",
+    "request": {
+      "operation": "validateData",
+      "pointer": "#/foo/bar",
+      "schema": { "foo": null },
+      "instance": "test"
+    },
+    "expect": { "ok": true, "valid": false, "messageContains": "cannot navigate past null/undefined" }
+  },
+  {
+    "name": "pointer into a string",
+    "request": {
+      "operation": "validateData",
+      "pointer": "#/foo/bar",
+      "schema": { "foo": "string" },
+      "instance": "test"
+    },
+    "expect": { "ok": true, "valid": false, "messageContains": "cannot navigate into string" }
+  },
+  {
+    "name": "compile a fragment",
+    "request": {
+      "operation": "compile",
+      "pointer": "#/components/schemas/User",
+      "schema": { "components": { "schemas": { "User": { "type": "object", "required": ["name"] } } } }
+    },
+    "expect": { "ok": true, "compiled": true }
+  },
+  {
+    "name": "compile reports a bad pointer",
+    "request": { "operation": "compile", "pointer": "#/nonexistent/path", "schema": { "type": "string" } },
+    "expect": { "ok": true, "compiled": false, "messageContains": "property \"nonexistent\" not found" }
+  },
+  {
+    "name": "invalid schema cannot be compiled",
+    "request": { "operation": "compile", "schema": { "type": "invalid-type" } },
+    "expect": { "ok": true, "compiled": false, "messageContains": "Invalid schema definition" }
+  },
+  {
+    "name": "parameter schema behind an openapi ref",
+    "request": {
+      "operation": "validateData",
+      "pointer": "#/paths/~1users~1{id}/get/parameters/0/schema",
+      "schema": {
+        "openapi": "3.1.0",
+        "info": { "title": "Specserve fixture", "version": "1.0.0" },
+        "paths": {
+          "/users/{id}": {
+            "get": {
+              "parameters": [{ "$ref": "#/components/parameters/UserId" }],
+              "responses": { "200": { "$ref": "#/components/responses/User" } }
+            }
+          }
+        },
+        "components": {
+          "parameters": {
+            "UserId": { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "minLength": 3 } }
+          },
+          "responses": { "User": { "description": "A user" } }
+        }
+      },
+      "instance": "abc"
+    },
+    "expect": { "ok": true, "valid": true, "maxErrors": 0 }
+  },
+  {
+    "name": "parameter schema rejects a short value",
+    "request": {
+      "operation": "validateData",
+      "pointer": "#/paths/~1users~1{id}/get/parameters/0/schema",
+      "schema": {
+        "openapi": "3.1.0",
+        "info": { "title": "Specserve fixture", "version": "1.0.0" },
+        "paths": { "/users/{id}": { "get": { "parameters": [{ "$ref": "#/components/parameters/UserId" }] } } },
+        "components": {
+          "parameters": { "UserId": { "schema": { "type": "string", "minLength": 3 } } }
+        }
+      },
+      "instance": "ab"
+    },
+    "expect": { "ok": true, "valid": false, "errorTypes": ["CONSTRAINT_VIOLATION"] }
+  },
+  {
+    "name": "response schema behind an openapi ref",
+    "request": {
+      "operation": "validateData",
+      "pointer": "#/paths/~1users~1{id}/get/responses/200/content/application~1json/schema",
+      "schema": {
+        "openapi": "3.1.0",
+        "info": { "title": "Specserve fixture", "version": "1.0.0" },
+        "paths": { "/users/{id}": { "get": { "responses": { "200": { "$ref": "#/components/responses/User" } } } } },
+        "components": {
+          "responses": {
+            "User": {
+              "description": "A user",
+              "content": {
+                "application/json": {
+                  "schema": { "type": "object", "required": ["id"], "properties": { "id": { "type": "string", "minLength": 3 } } }
+                }
+              }
+            }
+          }
+        }
+      },
+      "instance": { "id": "abc" }
+    },
+    "expect": { "ok": true, "valid": true, "maxErrors": 0 }
+  },
+  {
+    "name": "response schema requires id",
+    "request": {
+      "operation": "validateData",
+      "pointer": "#/paths/~1users~1{id}/get/responses/200/content/application~1json/schema",
+      "schema": {
+        "openapi": "3.1.0",
+        "paths": { "/users/{id}": { "get": { "responses": { "200": { "$ref": "#/components/responses/User" } } } } },
+        "components": {
+          "responses": {
+            "User": {
+              "content": {
+                "application/json": {
+                  "schema": { "type": "object", "required": ["id"], "properties": { "id": { "type": "string" } } }
+                }
+              }
+            }
+          }
+        }
+      },
+      "instance": {}
+    },
+    "expect": { "ok": true, "valid": false, "errorTypes": ["MISSING_REQUIRED_FIELD"] }
+  },
+  {
+    "name": "cyclic ref names the pointer",
+    "request": {
+      "operation": "compile",
+      "pointer": "#/paths/~1items/get/parameters/0/schema",
+      "schema": {
+        "openapi": "3.1.0",
+        "paths": { "/items": { "get": { "parameters": [{ "$ref": "#/components/parameters/LoopA" }] } } },
+        "components": {
+          "parameters": {
+            "LoopA": { "$ref": "#/components/parameters/LoopB" },
+            "LoopB": { "$ref": "#/components/parameters/LoopA" }
+          }
+        }
+      }
+    },
+    "expect": {
+      "ok": true,
+      "compiled": false,
+      "messageContains": "circular"
+    }
+  },
+  {
+    "name": "terminal schema ref still validates",
+    "request": {
+      "operation": "validateData",
+      "pointer": "#/paths/~1pets/get/responses/200/content/application~1json/schema",
+      "schema": {
+        "openapi": "3.1.0",
+        "paths": {
+          "/pets": {
+            "get": {
+              "responses": {
+                "200": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Pet" } } } }
+              }
+            }
+          }
+        },
+        "components": {
+          "schemas": {
+            "Pet": { "type": "object", "properties": { "name": { "type": "string" } }, "required": ["name"] }
+          }
+        }
+      },
+      "instance": { "name": "Fluffy" }
+    },
+    "expect": { "ok": true, "valid": true, "maxErrors": 0 }
+  },
+  {
+    "name": "allOf across fragments reports both missing fields",
+    "request": {
+      "operation": "validateData",
+      "pointer": "#/components/schemas/User",
+      "schema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "definitions": {
+          "BaseEntity": { "type": "object", "properties": { "id": { "type": "string" } }, "required": ["id"] }
+        },
+        "components": {
+          "schemas": {
+            "User": {
+              "allOf": [
+                { "$ref": "#/definitions/BaseEntity" },
+                { "type": "object", "properties": { "email": { "type": "string" }, "address": { "type": "object" } }, "required": ["email", "address"] }
+              ]
+            }
+          }
+        }
+      },
+      "instance": { "id": "user-456", "name": "Jane Doe" }
+    },
+    "expect": { "ok": true, "valid": false, "minErrors": 2, "errorTypes": ["MISSING_REQUIRED_FIELD"] }
+  },
+  {
+    "name": "nested parameter and schema refs unroll to the concrete schema",
+    "request": {
+      "operation": "validateData",
+      "pointer": "#/paths/~1users~1{id}/get/parameters/0/schema",
+      "schema": {
+        "openapi": "3.1.0",
+        "paths": {
+          "/users/{id}": {
+            "get": {
+              "parameters": [{ "$ref": "#/components/parameters/UserIdAlias" }]
+            }
+          }
+        },
+        "components": {
+          "parameters": {
+            "UserIdAlias": { "$ref": "#/components/parameters/UserId" },
+            "UserId": {
+              "name": "id",
+              "in": "path",
+              "schema": { "$ref": "#/components/schemas/UserId" }
+            }
+          },
+          "schemas": {
+            "UserId": { "$ref": "#/components/schemas/IdFormat" },
+            "IdFormat": { "type": "string", "minLength": 3 }
+          }
+        }
+      },
+      "instance": "abc"
+    },
+    "expect": { "ok": true, "valid": true, "maxErrors": 0 }
+  },
+  {
+    "name": "nested parameter and schema refs still enforce the concrete schema",
+    "request": {
+      "operation": "validateData",
+      "pointer": "#/paths/~1users~1{id}/get/parameters/0/schema",
+      "schema": {
+        "openapi": "3.1.0",
+        "paths": {
+          "/users/{id}": {
+            "get": {
+              "parameters": [{ "$ref": "#/components/parameters/UserIdAlias" }]
+            }
+          }
+        },
+        "components": {
+          "parameters": {
+            "UserIdAlias": { "$ref": "#/components/parameters/UserId" },
+            "UserId": { "schema": { "$ref": "#/components/schemas/UserId" } }
+          },
+          "schemas": {
+            "UserId": { "$ref": "#/components/schemas/IdFormat" },
+            "IdFormat": { "type": "string", "minLength": 3 }
+          }
+        }
+      },
+      "instance": "ab"
+    },
+    "expect": { "ok": true, "valid": false, "errorTypes": ["CONSTRAINT_VIOLATION"] }
+  }
+]

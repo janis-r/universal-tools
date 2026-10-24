@@ -1,0 +1,5 @@
+[target.wasm32-unknown-unknown]
+# getrandom's default WebAssembly backend imports JavaScript. This module is
+# loaded by more than one language, so randomness comes from the symbol below
+# instead of from a browser API.
+rustflags = ["--cfg", "getrandom_backend=\"custom\""]
